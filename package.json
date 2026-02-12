@@ -1,0 +1,18 @@
+{
+  "name": "mpstack",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev:editor": "turbo run dev --filter=@mpstack/editor",
+    "dev:mobile": "turbo run dev --filter=@mpstack/mobile",
+    "build": "turbo run build",
+    "build:schema": "turbo run build --filter=@mpstack/schema",
+    "build:ui": "turbo run build --filter=@mpstack/ui",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  }
+}
