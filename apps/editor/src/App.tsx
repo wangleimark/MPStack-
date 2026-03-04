@@ -29,7 +29,7 @@ import type {
   DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+
 
 import { useEditorStore } from './store';
 import { metaMap } from './config/component-metas';
@@ -94,16 +94,22 @@ const App: React.FC = () => {
         const fullMeta = metaMap.get(meta.type);
         if (!fullMeta) return;
 
-        // 创建新组件节点
-        addComponent(
-          {
-            type: fullMeta.type,
-            props: { ...fullMeta.defaultProps },
-            style: fullMeta.defaultStyle ? { ...fullMeta.defaultStyle } : undefined,
-            children: fullMeta.isContainer ? [] : undefined,
-          },
-          null, // 根层级
-        );
+        const newNode = {
+          type: fullMeta.type,
+          props: { ...fullMeta.defaultProps },
+          style: fullMeta.defaultStyle ? { ...fullMeta.defaultStyle } : undefined,
+          children: fullMeta.isContainer ? [] : undefined,
+        };
+
+        // 检查是否投放到容器组件内部
+        const overData = over.data.current as Record<string, any> | undefined;
+        if (overData?.origin === 'canvas-container') {
+          addComponent(newNode, overData.containerId);
+          return;
+        }
+
+        // 默认添加到根层级
+        addComponent(newNode, null);
         return;
       }
 

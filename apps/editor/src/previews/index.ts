@@ -23,6 +23,11 @@ import { PreviewText } from './PreviewText';
 import { PreviewImage } from './PreviewImage';
 import { PreviewContainer } from './PreviewContainer';
 import { PreviewBanner } from './PreviewBanner';
+import { PreviewOrderList } from './PreviewOrderList';
+import { PreviewSearchBar } from './PreviewSearchBar';
+import { PreviewStoreList } from './PreviewStoreList';
+import { PreviewTabBar } from './PreviewTabBar';
+import { PreviewNoticeList } from './PreviewNoticeList';
 
 /** 编辑器预览组件映射 */
 const previewMap: Record<string, React.ComponentType<any>> = {
@@ -30,6 +35,11 @@ const previewMap: Record<string, React.ComponentType<any>> = {
   MpImage: PreviewImage,
   MpContainer: PreviewContainer,
   MpBanner: PreviewBanner,
+  MpOrderList: PreviewOrderList,
+  MpSearchBar: PreviewSearchBar,
+  MpStoreList: PreviewStoreList,
+  MpTabBar: PreviewTabBar,
+  MpNoticeList: PreviewNoticeList,
 };
 
 /**
@@ -46,4 +56,14 @@ export function registerPreview(type: string, component: React.ComponentType<any
   previewMap[type] = component;
 }
 
-export { PreviewText, PreviewImage, PreviewContainer, PreviewBanner };
+export {
+  PreviewText,
+  PreviewImage,
+  PreviewContainer,
+  PreviewBanner,
+  PreviewOrderList,
+  PreviewSearchBar,
+  PreviewStoreList,
+  PreviewTabBar,
+  PreviewNoticeList,
+};

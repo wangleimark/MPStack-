@@ -42,6 +42,13 @@ export interface EditorState {
 
   /** 是否处于预览模式 */
   previewMode: boolean;
+
+  // ─── 多页（TabBar 页面切换） ──────────────────
+  /** 各 Tab 页对应的普通组件快照 (key → components) */
+  tabPages: Record<string, ComponentNode[]>;
+
+  /** 当前激活的 Tab key */
+  activeTabKey: string;
 }
 
 export interface EditorActions {
@@ -148,6 +155,14 @@ export interface EditorActions {
 
   /** 重置为空白页面 */
   resetPage: () => void;
+
+  // ─── 多页（TabBar 页面切换） ──────────────────
+
+  /**
+   * 切换 Tab 页面
+   * 保存当前普通组件 → 加载目标 Tab 的组件 → 更新 TabBar activeKey
+   */
+  switchTabPage: (newKey: string) => void;
 }
 
 // ─── 初始状态 ─────────────────────────────────────────────────────
@@ -184,6 +199,8 @@ export const useEditorStore = create<EditorState & EditorActions>()(
         maxHistory: 50,
         zoom: 1,
         previewMode: false,
+        tabPages: {} as Record<string, ComponentNode[]>,
+        activeTabKey: '',
 
         // ─── 内部：推入历史记录 ─────────────
 
@@ -392,6 +409,60 @@ export const useEditorStore = create<EditorState & EditorActions>()(
             state.hoveredId = null;
             state.history = [];
             state.future = [];
+            state.tabPages = {};
+            state.activeTabKey = '';
+          });
+        },
+
+        // ─── 多页切换 ──────────────────────
+
+        switchTabPage: (newKey: string) => {
+          set((state) => {
+            let currentKey = state.activeTabKey;
+
+            // 首次切换时，自动将当前 key 设为 TabBar 的默认 activeKey
+            if (!currentKey) {
+              const tabBarNode = state.page.components.find(
+                (c) => c.type === 'MpTabBar' && (c.props as any).fixed === true,
+              );
+              currentKey = (tabBarNode?.props as any)?.activeKey || 'home';
+            }
+
+            if (currentKey === newKey) return;
+
+            // 分离普通组件与固定底部组件
+            const regularComponents: ComponentNode[] = [];
+            const fixedComponents: ComponentNode[] = [];
+            for (const c of state.page.components) {
+              if (c.type === 'MpTabBar' && (c.props as any).fixed === true) {
+                fixedComponents.push(c);
+              } else {
+                regularComponents.push(c);
+              }
+            }
+
+            // 保存当前 Tab 的普通组件（深拷贝脱离 immer draft）
+            state.tabPages[currentKey] = JSON.parse(
+              JSON.stringify(regularComponents),
+            );
+
+            // 加载新 Tab 的组件（可能为空）
+            const newComponents: ComponentNode[] = state.tabPages[newKey]
+              ? JSON.parse(JSON.stringify(state.tabPages[newKey]))
+              : [];
+
+            // 同步 TabBar 节点的 activeKey prop
+            for (const fc of fixedComponents) {
+              if (fc.type === 'MpTabBar') {
+                (fc.props as any).activeKey = newKey;
+              }
+            }
+
+            // 重组 page.components：新页面普通组件 + 固定底部组件
+            state.page.components = [...newComponents, ...fixedComponents];
+            state.activeTabKey = newKey;
+            state.selectedId = null;
+            state.page.updatedAt = new Date().toISOString();
           });
         },
       })),
