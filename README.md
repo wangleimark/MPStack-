@@ -11,6 +11,7 @@
 ```
 MPStack-/
 ├── apps/
+│   ├── api/             # 🔌  页面 Schema API 服务 (Express)
 │   ├── editor/          # 🖥️  Web 可视化编辑器 (React + Vite)
 │   └── mobile/          # 📱  小程序运行端 (Taro 3.x)
 ├── packages/
@@ -73,12 +74,18 @@ pnpm build:ui
 ### 3. 启动开发服务
 
 ```bash
-# 启动 Web 编辑器 (默认端口 http://localhost:3000)
-pnpm dev:editor
+# 方式一：同时启动 API + 编辑器（推荐，打通全流程）
+pnpm dev
 
-# 启动小程序端（微信小程序）
-pnpm dev:mobile
+# 方式二：分别启动
+pnpm dev:api      # API 服务 (http://localhost:3001)
+pnpm dev:editor   # Web 编辑器 (http://localhost:3000)
+pnpm dev:mobile   # 小程序端（微信开发者工具）
 ```
+
+**打通流程**：编辑器拖拽搭建 → 点击「保存」→ API 存储 → 小程序动态页 `?id=xxx` 拉取渲染
+
+> 微信小程序开发时，需在开发者工具中勾选「不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书」，以便请求本地 API。
 
 ---
 
@@ -134,6 +141,15 @@ Web 可视化编辑器，核心能力：
 
 ---
 
+## 📚 文档
+
+| 文档 | 说明 |
+|------|------|
+| [跨端组件开发指南](docs/cross-platform-component-guide.md) | 以 MpBanner 为例，说明如何开发 Web + 小程序同构组件 |
+| [编辑器与小程序打通实现](docs/editor-miniprogram-integration.md) | 打通编辑器与小程序端的具体实现过程与配置说明 |
+
+---
+
 ## 📜 常用命令
 
 | 命令 | 说明 |
@@ -142,6 +158,8 @@ Web 可视化编辑器，核心能力：
 | `pnpm build` | 构建所有包（按依赖拓扑顺序） |
 | `pnpm build:schema` | 单独构建 `@mpstack/schema` |
 | `pnpm build:ui` | 单独构建 `@mpstack/ui` |
+| `pnpm dev` | 同时启动 API + 编辑器 |
+| `pnpm dev:api` | 启动 API 服务 (http://localhost:3001) |
 | `pnpm dev:editor` | 启动 Web 编辑器开发服务 |
 | `pnpm dev:mobile` | 启动小程序开发编译 |
 | `pnpm lint` | 全项目 Lint 检查 |

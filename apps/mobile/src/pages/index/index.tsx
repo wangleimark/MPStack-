@@ -69,7 +69,7 @@ const Index: React.FC = () => {
   const [loading] = useState(false);
 
   const handleNavigate = useCallback(() => {
-    Taro.navigateTo({ url: '/pages/dynamic/index?id=demo' });
+    Taro.navigateTo({ url: '/pages/dynamic/index?id=demo-page-001' });
   }, []);
 
   return (

@@ -1,10 +1,12 @@
 /**
  * Toolbar —— 顶部工具栏
  *
- * 功能：撤销 / 重做 / 缩放 / 预览 / 导出 JSON
+ * 功能：撤销 / 重做 / 缩放 / 预览 / 保存 / 打开 / 导出 JSON
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
+import { Modal, message } from 'antd';
 import { useEditorStore } from '../store';
+import { savePage, fetchPage, listPages, type PageListItem } from '../api/page-api';
 
 export const Toolbar: React.FC = () => {
   const undo = useEditorStore((s) => s.undo);
@@ -14,11 +16,62 @@ export const Toolbar: React.FC = () => {
   const previewMode = useEditorStore((s) => s.previewMode);
   const togglePreviewMode = useEditorStore((s) => s.togglePreviewMode);
   const getPageJSON = useEditorStore((s) => s.getPageJSON);
+  const loadPage = useEditorStore((s) => s.loadPage);
   const resetPage = useEditorStore((s) => s.resetPage);
   const historyLen = useEditorStore((s) => s.history.length);
   const futureLen = useEditorStore((s) => s.future.length);
   const pageTitle = useEditorStore((s) => s.page.title);
+  const pageId = useEditorStore((s) => s.page.id);
   const updatePageTitle = useEditorStore((s) => s.updatePageTitle);
+
+  const [loadModalOpen, setLoadModalOpen] = useState(false);
+  const [pageList, setPageList] = useState<PageListItem[]>([]);
+  const [loadPageId, setLoadPageId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      const json = getPageJSON();
+      await savePage(json);
+      message.success('保存成功');
+    } catch (e) {
+      message.error((e as Error).message || '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  }, [getPageJSON]);
+
+  const handleOpenLoadModal = useCallback(async () => {
+    setLoadModalOpen(true);
+    setLoadPageId('');
+    try {
+      const list = await listPages();
+      setPageList(list);
+    } catch {
+      setPageList([]);
+    }
+  }, []);
+
+  const handleLoad = useCallback(async () => {
+    const id = loadPageId.trim();
+    if (!id) {
+      message.warning('请输入页面 ID');
+      return;
+    }
+    setLoading(true);
+    try {
+      const page = await fetchPage(id);
+      loadPage(page);
+      setLoadModalOpen(false);
+      message.success('加载成功');
+    } catch (e) {
+      message.error((e as Error).message || '加载失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadPageId, loadPage]);
 
   const handleExport = useCallback(() => {
     const json = getPageJSON();
@@ -135,12 +188,34 @@ export const Toolbar: React.FC = () => {
         {previewMode ? '✏️ 编辑' : '👁️ 预览'}
       </button>
 
+      {/* Save / Open */}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        style={saving ? btnDisabledStyle : { ...btnStyle, background: '#52c41a', borderColor: '#52c41a' }}
+      >
+        {saving ? '保存中…' : '💾 保存'}
+      </button>
+      <button onClick={handleOpenLoadModal} style={btnStyle}>
+        📂 打开
+      </button>
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(pageId);
+          message.info(`页面 ID 已复制: ${pageId}，保存后在小程序动态页传入 ?id=${pageId} 预览`);
+        }}
+        style={btnStyle}
+        title="复制页面 ID，用于小程序预览"
+      >
+        📱 预览
+      </button>
+
       {/* Export */}
       <button onClick={handleLogJSON} style={btnStyle}>
         📋 查看 JSON
       </button>
-      <button onClick={handleExport} style={{ ...btnStyle, background: '#1890ff', borderColor: '#1890ff' }}>
-        💾 导出
+      <button onClick={handleExport} style={btnStyle}>
+        📥 导出文件
       </button>
 
       {/* Clear */}
@@ -150,6 +225,56 @@ export const Toolbar: React.FC = () => {
       >
         🗑️ 清空
       </button>
+
+      {/* 打开页面 Modal */}
+      <Modal
+        title="打开页面"
+        open={loadModalOpen}
+        onCancel={() => setLoadModalOpen(false)}
+        onOk={handleLoad}
+        okText="加载"
+        confirmLoading={loading}
+      >
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: 'block', marginBottom: 6, fontSize: 13 }}>页面 ID</label>
+          <input
+            value={loadPageId}
+            onChange={(e) => setLoadPageId(e.target.value)}
+            placeholder="输入页面 ID 或从下方选择"
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #d9d9d9',
+              borderRadius: 4,
+              fontSize: 13,
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+        {pageList.length > 0 && (
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 13 }}>已保存的页面</label>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', maxHeight: 160, overflow: 'auto' }}>
+              {pageList.map((p) => (
+                <li
+                  key={p.id}
+                  onClick={() => setLoadPageId(p.id)}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    borderRadius: 4,
+                    background: loadPageId === p.id ? '#e6f7ff' : 'transparent',
+                    marginBottom: 4,
+                    fontSize: 13,
+                  }}
+                >
+                  <strong>{p.title}</strong> <span style={{ color: '#999' }}>({p.id})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Modal>
     </header>
   );
 };

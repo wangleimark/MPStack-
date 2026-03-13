@@ -15,11 +15,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Taro, { useRouter } from '@tarojs/taro';
 import type { PageSchema } from '@mpstack/schema';
 import { PageRenderer, registerAllComponents } from '@/renderer';
+import { API_BASE } from '@/config/api';
 
 // 确保组件已注册
 registerAllComponents();
 
-// ─── Mock 数据（开发调试用，后续替换为真实 API） ────────────────
+// ─── Mock 数据（无 pageId 或 API 失败时兜底） ─────────────────────
 
 const MOCK_SCHEMA: PageSchema = {
   id: 'demo-page-001',
@@ -144,18 +145,15 @@ const DynamicPage: React.FC = () => {
         return;
       }
 
-      // TODO: 替换为真实 API
-      // const res = await Taro.request({
-      //   url: `${API_BASE}/pages/${pageId}`,
-      //   method: 'GET',
-      // });
-      // setSchema(res.data as PageSchema);
-
-      // 暂时使用 Mock
-      setSchema(MOCK_SCHEMA);
+      const res = await Taro.request({
+        url: `${API_BASE}/api/pages/${pageId}`,
+        method: 'GET',
+      });
+      setSchema(res.data as PageSchema);
     } catch (err) {
       setError('页面加载失败，请稍后重试');
       console.error('[DynamicPage] Fetch error:', err);
+      setSchema(MOCK_SCHEMA);
     } finally {
       setLoading(false);
     }

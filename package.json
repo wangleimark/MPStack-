@@ -3,8 +3,10 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
+    "dev:api": "turbo run dev --filter=@mpstack/api",
     "dev:editor": "turbo run dev --filter=@mpstack/editor",
     "dev:mobile": "turbo run dev --filter=@mpstack/mobile",
+    "dev": "turbo run dev --filter=@mpstack/api --filter=@mpstack/editor",
     "build": "turbo run build",
     "build:schema": "turbo run build --filter=@mpstack/schema",
     "build:ui": "turbo run build --filter=@mpstack/ui",
